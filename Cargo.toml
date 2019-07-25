@@ -1,0 +1,26 @@
+[package]
+name = "char-range"
+version = "0.1.0"
+edition = "2018"
+
+authors = ["Christopher Durham (aka CAD97) <cad97@cad97.com>"]
+
+[features]
+default = []
+
+par-iter = ["rayon"]
+
+[dependencies]
+rayon = { version = "1.1.0", optional = true }
+
+[[bench]]
+name = "range_par_iter"
+harness = false
+required-features = ["par-iter"]
+
+[[bench]]
+name = "range_iter"
+harness = false
+
+[dev-dependencies]
+criterion = "0.2.11"
