@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["CharRange","An inclusive range of characters."],["Iter","An iterator over a range of unicode code points."],["ParIter","A parallel iterator over a range of unicode code points."]]});
