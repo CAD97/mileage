@@ -10,6 +10,7 @@ use {
 };
 
 mod iter;
+#[cfg(feature = "par-iter")]
 mod par_iter;
 pub use self::{iter::Iter, par_iter::Iter as ParIter};
 
@@ -84,6 +85,11 @@ impl CharRange {
         CharRange { low, high }
     }
 
+    /// A range with exactly one member.
+    pub const fn singleton(c: char) -> CharRange {
+        CharRange::closed(c, c)
+    }
+
     /// A canonical empty range.
     pub const fn empty() -> CharRange {
         CharRange {
@@ -132,7 +138,7 @@ impl<R: RangeBounds<char>> From<R> for CharRange {
 }
 
 impl CharRange {
-    /// Does this range include a character?
+    /// Does this range include this character?
     ///
     /// # Examples
     ///

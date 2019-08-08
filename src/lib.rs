@@ -28,12 +28,16 @@
 //! }
 //! ```
 
-#[cfg(feature = "set")]
+#[cfg(feature = "alloc")]
 extern crate alloc;
 
 pub mod range;
+#[cfg(feature = "set")]
+pub mod set;
 
 pub use crate::range::CharRange;
+#[cfg(feature = "set")]
+pub use crate::set::CharSet;
 
 pub(crate) const BEFORE_SURROGATE: char = '\u{D7FF}';
 pub(crate) const AFTER_SURROGATE: char = '\u{E000}';

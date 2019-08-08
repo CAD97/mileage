@@ -64,7 +64,6 @@ impl Iter {
     }
 }
 
-//noinspection RsSortImplTraitMembers (stdlib order)
 impl Iterator for Iter {
     type Item = char;
 
@@ -90,6 +89,10 @@ impl Iterator for Iter {
     fn count(self) -> usize {
         self.len()
     }
+
+    fn last(mut self) -> Option<Self::Item> {
+        self.next_back()
+    }
 }
 
 impl DoubleEndedIterator for Iter {
@@ -108,6 +111,7 @@ impl DoubleEndedIterator for Iter {
 
 impl ExactSizeIterator for Iter {
     // doesn't work when usize == u16 but Range<u32> is ExactSizeIterator so /shrug
+    // we use said impl here so we're exactly as broken as the standard library
     fn len(&self) -> usize {
         #[allow(clippy::range_plus_one)] // for ExactSizeIterator impl
         let len = (self.low as u32..self.high as u32 + 1).len() as u32;
