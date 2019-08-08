@@ -21,8 +21,8 @@ matrix:
   include:
     - name: tests
       script:
-        - cargo test --all
-        - cargo doc --all --no-deps
+        - cargo test --all --all-features
+        - cargo doc --all --all-features --no-deps
     - name: style
       install:
         - rustup component add rustfmt
@@ -43,6 +43,6 @@ matrix:
         - cargo install cargo-update || true
         - cargo install-update -i cargo-tarpaulin cargo-update
       script:
-        - cargo tarpaulin --out Xml
+        - cargo tarpaulin --all-features --out Xml
       after_success:
         - bash <(curl -s https://codecov.io/bash)
