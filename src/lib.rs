@@ -48,4 +48,3 @@ fn surrogates_correct() {
     assert!(char::from_u32(BEFORE_SURROGATE as u32 + 1).is_none());
     assert!(char::from_u32(AFTER_SURROGATE as u32 - 1).is_none());
 }
-
