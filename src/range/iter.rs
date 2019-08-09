@@ -52,7 +52,7 @@ impl Iter {
             } else {
                 #[allow(unsafe_code)]
                 unsafe {
-                    char::from_u32_unchecked(self.low as u32 - 1)
+                    char::from_u32_unchecked(self.high as u32 - 1)
                 }
             }
         }
@@ -103,7 +103,7 @@ impl DoubleEndedIterator for Iter {
             return None;
         }
 
-        let c = self.low;
+        let c = self.high;
         self.step_backward();
         Some(c)
     }
