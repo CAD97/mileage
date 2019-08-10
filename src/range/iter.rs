@@ -130,28 +130,58 @@ impl FusedIterator for Iter {}
 #[cfg(test)]
 mod tests {
     use super::*;
-    use alloc::vec;
     use alloc::vec::Vec;
+
+    fn trivial(r: CharRange) -> impl Iterator<Item = char> + DoubleEndedIterator {
+        (r.low as u32..=r.high as u32).filter_map(char::from_u32)
+    }
 
     #[test]
     fn exact_size_iterator() {
+        // Chain<impl Iterator, impl Iterator> isn't ExactSizeIterator
+        // Test that our ExactSize assertion is actually true on the largest case
         // https://github.com/rust-lang/rust/issues/34433#issuecomment-244573473
-        let v: Vec<_> = CharRange::from('a'..='g')
-            .iter()
-            .enumerate()
-            .rev()
-            .collect();
+        let r = CharRange::from('a'..='z');
         assert_eq!(
-            v,
-            vec![
-                (6, 'g'),
-                (5, 'f'),
-                (4, 'e'),
-                (3, 'd'),
-                (2, 'c'),
-                (1, 'b'),
-                (0, 'a')
-            ]
+            r.iter().enumerate().rev().collect::<Vec<_>>(),
+            trivial(r)
+                .enumerate()
+                .collect::<Vec<_>>()
+                .into_iter()
+                .rev()
+                .collect::<Vec<_>>(),
         );
+    }
+
+    #[test]
+    fn full_range() {
+        let r = CharRange::from(..);
+        assert_eq!(r.iter().count(), trivial(r).count());
+        assert_eq!(r.iter().collect::<Vec<_>>(), trivial(r).collect::<Vec<_>>());
+    }
+
+    #[test]
+    fn reverse_range() {
+        let r = CharRange::from(..);
+        assert_eq!(
+            r.iter().rev().collect::<Vec<_>>(),
+            trivial(r).rev().collect::<Vec<_>>(),
+        );
+    }
+
+    #[test]
+    fn surrogate_hug() {
+        let r = CharRange::from(BEFORE_SURROGATE..=AFTER_SURROGATE);
+        assert_eq!(r.iter().count(), trivial(r).count());
+        assert_eq!(r.iter().count(), trivial(r).count());
+        assert_eq!(r.iter().collect::<Vec<_>>(), r.iter().collect::<Vec<_>>());
+    }
+
+    #[test]
+    fn alphabet() {
+        let r = CharRange::from('a'..='z');
+        assert_eq!(r.iter().count(), trivial(r).count());
+        assert_eq!(r.iter().count(), trivial(r).count());
+        assert_eq!(r.iter().collect::<Vec<_>>(), trivial(r).collect::<Vec<_>>());
     }
 }

@@ -72,33 +72,30 @@ mod tests {
     #[test]
     fn full_agrees() {
         let r = CharRange::from(..);
-        assert_eq!(r.iter().count(), 1_112_064);
         assert_eq!(r.par_iter().count(), r.iter().count());
         assert_eq!(
             r.par_iter().collect::<Vec<_>>(),
-            r.iter().collect::<Vec<_>>()
+            r.iter().collect::<Vec<_>>(),
         );
     }
 
     #[test]
     fn surrogate_hug_agrees() {
         let r = CharRange::from(BEFORE_SURROGATE..=AFTER_SURROGATE);
-        assert_eq!(r.iter().count(), 2);
         assert_eq!(r.par_iter().count(), r.iter().count());
         assert_eq!(
             r.par_iter().collect::<Vec<_>>(),
-            r.iter().collect::<Vec<_>>()
+            r.iter().collect::<Vec<_>>(),
         );
     }
 
     #[test]
     fn alphabet_agrees() {
         let r = CharRange::from('a'..='z');
-        assert_eq!(r.iter().count(), 26);
         assert_eq!(r.par_iter().count(), r.iter().count());
         assert_eq!(
             r.par_iter().collect::<Vec<_>>(),
-            r.iter().collect::<Vec<_>>()
+            r.iter().collect::<Vec<_>>(),
         );
     }
 }
