@@ -70,66 +70,6 @@ impl CharSet {
     fn search(&self, c: char) -> Result<usize, usize> {
         self.ranges.binary_search_by(|r| r.cmp_char(c))
     }
-
-    /// Insert a character at the given range index.
-    ///
-    /// # Correctness
-    ///
-    /// Assumes
-    ///
-    /// - `self.ranges[idx - 1].high < c` (or `idx == 0`)
-    /// - `self.ranges[idx].low > c` (or `idx == self.ranges.len()`)
-    fn insert_at(&mut self, idx: usize, c: char) {
-        if idx == self.ranges.len() {
-            self.ranges.push(CharRange::singleton(c));
-            return;
-        }
-
-        let above = &mut self.ranges[idx];
-        debug_assert!(above.low > c);
-        let high = above.high;
-
-        let diff = above.low as u32 - c as u32;
-        if diff == 1 {
-            above.low = c;
-        } else {
-            self.ranges.insert(idx, CharRange::singleton(c));
-        }
-
-        if idx > 0 {
-            let below = &mut self.ranges[idx - 1];
-            let diff = c as u32 - below.high as u32;
-            if diff <= 1 {
-                below.high = high;
-                self.ranges.remove(idx);
-            }
-        }
-    }
-
-    /// Insert a character at the given range index.
-    ///
-    /// # Correctness
-    ///
-    /// Assumes
-    ///
-    /// - `self.ranges[idx].contains(c)`
-    fn remove_at(&mut self, idx: usize, c: char) {
-        let this = &mut self.ranges[idx];
-        debug_assert!(this.contains(c));
-
-        if this.len() == 1 {
-            self.ranges.remove(idx);
-        } else if this.low == c {
-            *this = CharRange::from((Bound::Excluded(c), Bound::Included(this.high)));
-        } else if this.high == c {
-            *this = CharRange::from(this.low..=c);
-        } else {
-            let low = this.low;
-            *this = CharRange::from((Bound::Excluded(c), Bound::Included(this.high)));
-            // insert before `this`
-            self.ranges.insert(idx, CharRange::from(low..=c));
-        }
-    }
 }
 
 /*// Set operations
@@ -170,11 +110,36 @@ impl CharSet {
 
     pub fn insert(&mut self, c: char) {
         if let Err(idx) = self.search(c) {
-            self.insert_at(idx, c);
+            if idx == self.ranges.len() {
+                self.ranges.push(CharRange::singleton(c));
+                return;
+            }
+
+            let above = &mut self.ranges[idx];
+            debug_assert!(above.low > c);
+            let high = above.high;
+
+            if above.low as u32 - c as u32 == 1 {
+                above.low = c;
+            } else {
+                self.ranges.insert(idx, CharRange::singleton(c));
+            }
+
+            if idx > 0 {
+                let below = &mut self.ranges[idx - 1];
+                if c as u32 - below.high as u32 <= 1 {
+                    below.high = high;
+                    self.ranges.remove(idx);
+                }
+            }
         }
     }
 
     pub fn insert_range(&mut self, r: CharRange) {
+        if r.is_empty() {
+            return;
+        }
+
         // low_idx: inclusive index of lowest replaced range
         // low_char: lowest char of the new inserted range
         let (mut low_idx, mut low_char) = match self.search(r.low) {
@@ -215,22 +180,72 @@ impl CharSet {
 
     pub fn remove(&mut self, c: char) {
         if let Ok(idx) = self.search(c) {
-            self.remove_at(idx, c);
+            let this = &mut self.ranges[idx];
+            if this.len() == 1 {
+                self.ranges.remove(idx);
+            } else if this.low == c {
+                *this = CharRange::from((Bound::Excluded(c), Bound::Included(this.high)));
+            } else if this.high == c {
+                *this = CharRange::from(this.low..=c);
+            } else {
+                let low = this.low;
+                *this = CharRange::from((Bound::Excluded(c), Bound::Included(this.high)));
+                // insert before `this`
+                self.ranges.insert(idx, CharRange::from(low..=c));
+            }
         }
     }
 
     pub fn remove_range(&mut self, r: CharRange) {
-        let idx = match self.search(r.low) {
+        if r.is_empty() {
+            return;
+        }
+
+        // inclusive index of lowest edited range
+        let low = self.search(r.low).unwrap_or_else(|it| it);
+        // exclusive index of highest edited range
+        let high = match self.search(r.high) {
+            Ok(idx) => idx + 1,
             Err(idx) => idx,
-            Ok(idx) => {
-                self.remove_at(idx, r.low);
-                idx
-            }
         };
-        self.remove(r.high);
-        while self.ranges[idx].high < r.high {
-            assert!(self.ranges[idx].low > r.low);
-            self.ranges.remove(idx);
+
+        if low == high {
+            // no change, range not included
+            debug_assert!(!self.contains(r.low));
+            debug_assert!(!self.contains(r.high));
+        } else if low + 1 == high {
+            // one range to split
+            let split = &mut self.ranges[low];
+            if split.low == r.low && split.high == r.high {
+                // remove entire range
+                self.ranges.remove(low);
+            } else if split.low == r.low {
+                // shrink to top
+                debug_assert!(split.high > r.high);
+                *split = CharRange::from((Bound::Excluded(r.high), Bound::Included(split.high)));
+            } else if split.high == r.high {
+                // shrink to bottom
+                debug_assert!(r.low > split.low);
+                *split = CharRange::from((Bound::Included(split.low), Bound::Excluded(r.low)));
+            } else {
+                // split
+                debug_assert!(split.high > r.high);
+                debug_assert!(r.low > split.low);
+                let high_char = split.high;
+                *split = CharRange::from((Bound::Included(split.low), Bound::Excluded(r.low)));
+                self.ranges.insert(
+                    high, // insert after `split`
+                    CharRange::from((Bound::Excluded(r.high), Bound::Included(high_char))),
+                );
+            }
+        } else {
+            let left = &mut self.ranges[low];
+            *left = CharRange::from((Bound::Included(left.low), Bound::Excluded(r.low)));
+            let high = high - 1; // inclusive
+            let right = &mut self.ranges[high];
+            *right = CharRange::from((Bound::Excluded(r.high), Bound::Included(right.high)));
+            self.ranges
+                .drain((Bound::Excluded(low), Bound::Excluded(high)));
         }
     }
 }
@@ -291,6 +306,30 @@ mod tests {
                 ranges: set.into_iter().map(Into::into).collect(),
             };
             set.insert_range(CharRange::from(diff));
+            let result = CharSet {
+                ranges: result.into_iter().map(Into::into).collect(),
+            };
+            assert_eq!(set, result);
+        }
+    }
+
+    #[test]
+    fn remove_range() {
+        #[rustfmt::skip]
+        let test_data = vec![
+            (vec![], 'a'..='a', vec![]),
+            (vec!['a'..='a'], 'a'..='a', vec![]),
+            (vec!['a'..='c'], 'a'..='a', vec!['b'..='c']),
+            (vec!['a'..='c'], 'b'..='b', vec!['a'..='a', 'c'..='c']),
+            (vec!['a'..='c'], 'c'..='c', vec!['a'..='b']),
+            (vec!['a'..='b', 'd'..='e'], 'b'..='d', vec!['a'..='a', 'e'..='e']),
+        ];
+
+        for (set, diff, result) in test_data {
+            let mut set = CharSet {
+                ranges: set.into_iter().map(Into::into).collect(),
+            };
+            set.remove_range(CharRange::from(diff));
             let result = CharSet {
                 ranges: result.into_iter().map(Into::into).collect(),
             };
