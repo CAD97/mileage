@@ -119,7 +119,6 @@ impl CharSet {
 
         if this.len() == 1 {
             self.ranges.remove(idx);
-            return;
         } else if this.low == c {
             *this = CharRange::from((Bound::Excluded(c), Bound::Included(this.high)));
         } else if this.high == c {

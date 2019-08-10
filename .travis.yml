@@ -28,8 +28,8 @@ matrix:
         - rustup component add rustfmt
         - rustup component add clippy
       script:
-        - cargo clippy --all-features --all-targets --tests -- -D warnings
-        - cargo fmt --all-features -- --check
+        - cargo clippy --all --all-features --all-targets --tests -- -D warnings
+        - cargo fmt --all -- --check
     - name: no-default-features
       script:
         - cargo test --all --no-default-features
