@@ -46,6 +46,6 @@ matrix:
         - cargo install cargo-update || true
         - cargo install-update -i cargo-tarpaulin cargo-update
       script:
-        - cargo tarpaulin --all-features --out Xml
+        - cargo tarpaulin --run-types Doctests Tests --all-features --out Xml
       after_success:
         - bash <(curl -s https://codecov.io/bash)
