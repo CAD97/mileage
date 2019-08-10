@@ -28,10 +28,13 @@ matrix:
         - rustup component add rustfmt
         - rustup component add clippy
       script:
-        - cargo clippy --all-targets --tests -- -D warnings
-        - cargo fmt -- --check
+        - cargo clippy --all-features --all-targets --tests -- -D warnings
+        - cargo fmt --all-features -- --check
+    - name: no-default-features
+      script:
+        - cargo test --all --no-default-features
     - name: coverage
-      rust: nightly-2019-05-20
+      rust: nightly-2019-08-08
       sudo: required
       cache: cargo
       env: RUSTFLAGS="--cfg procmacro2_semver_exempt"
