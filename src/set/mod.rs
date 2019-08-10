@@ -25,10 +25,11 @@ impl Ord for CharSet {
     }
 }
 
-impl From<CharRange> for CharSet {
-    fn from(range: CharRange) -> Self {
+// sorry for the inference issues this causes I guess ¯\_(ツ)_/¯
+impl<R: Into<CharRange>> From<R> for CharSet {
+    fn from(range: R) -> Self {
         CharSet {
-            ranges: vec![range],
+            ranges: vec![range.into()],
         }
     }
 }
@@ -104,10 +105,22 @@ impl CharSet {
 }*/
 
 impl CharSet {
+    /// Clear this set such that it is empty again.
     pub fn clear(&mut self) {
         self.ranges.clear()
     }
 
+    /// Insert a single character to this set.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use char_range::CharSet;
+    /// let mut set = CharSet::from('a'..='b');
+    /// set.insert('d');
+    /// set.insert('c');
+    /// assert_eq!(set, CharSet::from('a'..='d'));
+    /// ```
     pub fn insert(&mut self, c: char) {
         if let Err(idx) = self.search(c) {
             if idx == self.ranges.len() {
@@ -178,6 +191,16 @@ impl CharSet {
         }
     }
 
+    /// Remove a single character to this set.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use {core::iter::FromIterator, char_range::{CharSet, CharRange}};
+    /// let mut set = CharSet::from('a'..='c');
+    /// set.remove('b');
+    /// assert_eq!(set, CharSet::from_iter(vec!['a', 'c']));
+    /// ```
     pub fn remove(&mut self, c: char) {
         if let Ok(idx) = self.search(c) {
             let this = &mut self.ranges[idx];
@@ -190,8 +213,10 @@ impl CharSet {
             } else {
                 let low = this.low;
                 *this = CharRange::from((Bound::Excluded(c), Bound::Included(this.high)));
-                // insert before `this`
-                self.ranges.insert(idx, CharRange::from(low..=c));
+                self.ranges.insert(
+                    idx, // insert before `this`
+                    CharRange::from((Bound::Included(low), Bound::Excluded(c))),
+                );
             }
         }
     }
@@ -287,6 +312,7 @@ mod tests {
     fn insert_range() {
         #[rustfmt::skip]
         let test_data = vec![
+            (vec!['a'..='c'], 'z'..='a' /* empty */, vec!['a'..='c']),
             (vec![], 'm'..='m', vec!['m'..='m']),
             (vec!['m'..='m'], 'l'..='l', vec!['l'..='m']),
             (vec!['m'..='m'], 'n'..='n', vec!['m'..='n']),
@@ -317,6 +343,7 @@ mod tests {
     fn remove_range() {
         #[rustfmt::skip]
         let test_data = vec![
+            (vec!['a'..='c'], 'z'..='a' /* empty */, vec!['a'..='c']),
             (vec![], 'a'..='a', vec![]),
             (vec!['a'..='a'], 'a'..='a', vec![]),
             (vec!['a'..='c'], 'a'..='a', vec!['b'..='c']),
