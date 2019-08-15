@@ -1,5 +1,5 @@
 [package]
-name = "char-range"
+name = "mileage"
 version = "0.1.0"
 edition = "2018"
 
@@ -7,14 +7,22 @@ authors = ["Christopher Durham (aka CAD97) <cad97@cad97.com>"]
 
 [features]
 default = []
-
 alloc = []
+
 set = ["alloc"]
+trie = []
+new-trie = ["indexmap","bitvec","proc-macro2","quote","itertools"]
 
 par-iter = ["rayon","alloc"]
 
 [dependencies]
 rayon = { version = "1.1.0", optional = true }
+
+indexmap = { version = "1.0.2", optional = true }
+bitvec = { version = "0.14.0", optional = true, default-features = false, features = ["std"] } # myrrlyn/bitvec#22
+proc-macro2 = { version = "1.0.0", optional = true, default-features = false }
+quote = { version = "1.0.0", optional = true, default-features = false }
+itertools = { version = "0.8.0", optional = true, default-features = false }
 
 [[bench]]
 name = "range_par_iter"

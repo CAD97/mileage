@@ -17,7 +17,7 @@
 //! # Examples
 //!
 //! ```
-//! use char_range::CharRange;
+//! use mileage::CharRange;
 //!
 //! for character in CharRange::from('a'..='z') {
 //!     // character is each character in lowercase ascii in sorted order
@@ -34,6 +34,8 @@ extern crate alloc;
 pub mod range;
 #[cfg(feature = "set")]
 pub mod set;
+#[cfg(feature = "trie")]
+pub mod trie;
 
 pub use crate::range::CharRange;
 #[cfg(feature = "set")]

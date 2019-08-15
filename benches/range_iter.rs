@@ -1,11 +1,11 @@
 #![allow(clippy::type_complexity)]
 
 use {
-    char_range::{range::Iter, CharRange},
     core::{char, iter::*, ops::RangeInclusive},
     criterion::{
         black_box, criterion_group, criterion_main, BatchSize, Bencher, Benchmark, Criterion,
     },
+    mileage::{range::Iter, CharRange},
 };
 
 pub(crate) const BEFORE_SURROGATE: char = '\u{D7FF}';

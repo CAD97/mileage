@@ -21,7 +21,7 @@ pub use par_iter::Iter as ParIter;
 /// The most idiomatic way to construct this range is by converting from a std range:
 ///
 /// ```
-/// # use { char_range::CharRange, core::{char, ops::RangeInclusive} };
+/// # use { mileage::CharRange, core::{char, ops::RangeInclusive} };
 /// assert_eq!(CharRange::from('a'..='z'), CharRange::closed('a', 'z'));
 /// assert_eq!(RangeInclusive::from(CharRange::from(..)), '\0'..=char::MAX);
 /// ```
@@ -145,7 +145,7 @@ impl CharRange {
     /// # Examples
     ///
     /// ```
-    /// # use char_range::CharRange;
+    /// # use mileage::CharRange;
     /// assert!( CharRange::from('a'..='g').contains('d'));
     /// assert!(!CharRange::from('a'..='g').contains('z'));
     /// assert!(!CharRange::from('a'.. 'a').contains('a'));

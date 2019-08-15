@@ -2,9 +2,9 @@
 
 use criterion::BatchSize;
 use {
-    char_range::{range::ParIter, CharRange},
     core::{char, ops::Range},
     criterion::{black_box, criterion_group, criterion_main, Bencher, Benchmark, Criterion},
+    mileage::{range::ParIter, CharRange},
     rayon::{iter::*, prelude::IntoParallelIterator},
 };
 

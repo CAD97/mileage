@@ -115,7 +115,7 @@ impl CharSet {
     /// # Examples
     ///
     /// ```
-    /// # use char_range::CharSet;
+    /// # use mileage::CharSet;
     /// let mut set = CharSet::from('a'..='b');
     /// set.insert('d');
     /// set.insert('c');
@@ -196,7 +196,7 @@ impl CharSet {
     /// # Examples
     ///
     /// ```
-    /// # use {core::iter::FromIterator, char_range::{CharSet, CharRange}};
+    /// # use {core::iter::FromIterator, mileage::{CharSet, CharRange}};
     /// let mut set = CharSet::from('a'..='c');
     /// set.remove('b');
     /// assert_eq!(set, CharSet::from_iter(vec!['a', 'c']));
