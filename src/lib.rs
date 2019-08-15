@@ -2,17 +2,20 @@
 #![deny(unsafe_code, rust_2018_idioms)]
 #![warn(missing_debug_implementations)]
 
-//! Character Range
+//! Enjoy the efficient char range! Also provided are ways of working with noncontinuous
+//! sets of characters.
 //!
-//! A simple range of characters. In effect, `std::ops::RangeInclusive<char>`, except:
-//!
-//! - it works for iteration,
-//! - the Iterator and Range type are separate, and
-//! - it's guaranteed to be exactly two `char` big.
+//! - `CharRange` is a simple range of characters, effectively `std::ops::RangeInclusive<char>`.
+//! - `CharSet` is a set of characters handled as a sorted vector of compact ranges.
+//! - `CharTrie` is a static set of characters optimized for wide codepoint coverage.
 //!
 //! # Features
 //!
-//! - `par-iter`: Adds implementations of `rayon::IntoParallelIterator`.
+//! - `par-iter`: Adds implementations of `rayon::IntoParallelIterator`. Activates `alloc`.
+//! - `alloc`: Enables features requiring allocation.
+//! - `set`: Adds the `CharSet` type. Activates `alloc`.
+//! - `trie`: Adds the `CharTrie` type.
+//! - `new-trie`: Adds `CharTrie::new_with` to create code for embedding `CharTrie` tables.
 //!
 //! # Examples
 //!
@@ -40,6 +43,8 @@ pub mod trie;
 pub use crate::range::CharRange;
 #[cfg(feature = "set")]
 pub use crate::set::CharSet;
+#[cfg(feature = "trie")]
+pub use crate::trie::CharTrie;
 
 pub(crate) const BEFORE_SURROGATE: char = '\u{D7FF}';
 pub(crate) const AFTER_SURROGATE: char = '\u{E000}';
