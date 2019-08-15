@@ -4,7 +4,7 @@ use criterion::BatchSize;
 use {
     core::{char, ops::Range},
     criterion::{black_box, criterion_group, criterion_main, Bencher, Benchmark, Criterion},
-    mileage::{range::ParIter, CharRange},
+    mileage::CharRange,
     rayon::{iter::*, prelude::IntoParallelIterator},
 };
 
@@ -76,7 +76,7 @@ fn decompress_() -> impl ParallelIterator<Item = char> + Clone {
     })
 }
 
-fn actual() -> ParIter {
+fn actual() -> impl ParallelIterator<Item = char> + Clone {
     CharRange::from(..).par_iter()
 }
 

@@ -13,8 +13,6 @@ mod iter;
 pub use self::iter::Iter;
 #[cfg(feature = "par-iter")]
 mod par_iter;
-#[cfg(feature = "par-iter")]
-pub use par_iter::Iter as ParIter;
 
 /// An inclusive range of characters.
 ///

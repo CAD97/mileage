@@ -1,12 +1,12 @@
-use core::iter::FromIterator;
 use {
     crate::CharRange,
     alloc::{vec, vec::Vec},
-    core::{char, cmp, ops::Bound},
+    core::{char, cmp, iter::FromIterator, ops::Bound},
 };
 
 mod iter;
-// mod par_iter;
+#[cfg(feature = "par-iter")]
+mod par_iter;
 
 /// A set of characters represented by the compact ranges of characters.
 #[derive(Clone, Debug, Default, Eq, PartialEq, PartialOrd, Hash)]
