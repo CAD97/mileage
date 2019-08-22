@@ -11,11 +11,9 @@
 //!
 //! # Features
 //!
-//! - `par-iter`: Adds implementations of `rayon::IntoParallelIterator`. Activates `alloc`.
-//! - `alloc`: Enables features requiring allocation.
-//! - `set`: Adds the `CharSet` type. Activates `alloc`.
+//! - `set`: Adds the `CharSet` type.
 //! - `trie`: Adds the `CharTrie` type.
-//! - `new-trie`: Adds `CharTrie::new_with` to create code for embedding `CharTrie` tables.
+//! - `par-iter`: Adds implementations of `rayon::IntoParallelIterator`.
 //!
 //! # Examples
 //!
@@ -33,6 +31,8 @@
 
 #[cfg(any(feature = "alloc", test))]
 extern crate alloc;
+#[cfg(any(feature = "std", test))]
+extern crate std;
 
 pub mod range;
 #[cfg(feature = "set")]
@@ -40,11 +40,7 @@ pub mod set;
 #[cfg(feature = "trie")]
 pub mod trie;
 
-pub use crate::range::CharRange;
-#[cfg(feature = "set")]
-pub use crate::set::CharSet;
-#[cfg(feature = "trie")]
-pub use crate::trie::CharTrie;
+pub use range::CharRange;
 
 pub(crate) const BEFORE_SURROGATE: char = '\u{D7FF}';
 pub(crate) const AFTER_SURROGATE: char = '\u{E000}';

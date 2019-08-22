@@ -1,5 +1,5 @@
 use {
-    crate::{CharRange, CharSet},
+    crate::{CharRange, set::CharSet},
     rayon::{
         iter::plumbing::{Consumer, UnindexedConsumer},
         prelude::*,

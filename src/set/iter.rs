@@ -1,5 +1,5 @@
 use {
-    crate::{CharRange, CharSet},
+    crate::{CharRange, set::CharSet},
     core::{iter, slice::Iter as SliceIter},
 };
 

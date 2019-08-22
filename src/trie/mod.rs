@@ -106,138 +106,93 @@ impl CharTrie {
             leaves,
         }
     }
+}
 
-    /// A convenience function to assert that the trie is optimal.
-    #[cfg(feature = "alloc")]
-    pub fn assert_optimal(&self) {
-        use {
-            alloc::{collections::BTreeSet, vec},
-            core::cmp,
-        };
+/// Generate a new trie from a membership function.
+///
+/// This constructs Rust code that is legal in expression position that
+/// evaluates to a `CharTrie`. Requires that `CharTrie` is in scope.
+///
+/// Fails if the set was unable to be compressed into the trie format.
+#[cfg(feature = "new-trie")]
+pub fn generate(
+    f: impl Fn(char) -> bool + Copy,
+) -> Result<proc_macro2::TokenStream, core::num::TryFromIntError> {
+    use {
+        crate::CharRange,
+        alloc::vec::Vec,
+        bitvec::prelude::{self as bv, BitVec},
+        core::char,
+        core::convert::TryFrom,
+        indexmap::IndexSet,
+        itertools::Itertools,
+        quote::quote,
+    };
 
-        let max_level2_leaf = *self.level2.iter().max().unwrap();
-        let max_level3_leaf = *self.level3.1.iter().flat_map(|it| it.iter()).max().unwrap();
-        let max_leaf_index = cmp::max(max_level2_leaf, max_level3_leaf) as usize;
-        assert_eq!(
-            self.leaves.len(),
-            max_leaf_index + 1,
-            "wrong number of leaves stored",
-        );
-
-        let max_level3_index = *self.level3.0.iter().max().unwrap();
-        assert_eq!(
-            self.level3.1.len(),
-            max_level3_index as usize + 1,
-            "wrong number of level three secondary nodes",
-        );
-
-        let mut leaf_referenced = vec![false; max_leaf_index + 1];
-        for &leaf_index in self.level2.iter() {
-            leaf_referenced[leaf_index as usize] = true;
-        }
-        for &leaf_index in self.level3.1.iter().flat_map(|it| it.iter()) {
-            leaf_referenced[leaf_index as usize] = true;
-        }
-        assert_eq!(
-            leaf_referenced.iter().enumerate().find(|&(_, &b)| !b),
-            None,
-            "leaf not referenced",
-        );
-
-        let unique_leaves: BTreeSet<_> = self.leaves.iter().collect();
-        assert_eq!(
-            self.leaves.len(),
-            unique_leaves.len(),
-            "duplicate leaves present"
-        ); // FEAT: say which
+    fn level1(f: impl Fn(char) -> bool + Copy) -> proc_macro2::TokenStream {
+        let level1: BitVec<bv::LittleEndian, u64> =
+            CharRange::from('\0'..'\u{800}').iter().map(f).collect();
+        let level1 = level1.as_slice();
+        quote!(&[#(#level1),*],)
     }
 
-    /// Construct a new trie from a membership function.
-    ///
-    /// This constructs Rust code that is legal in expression position that
-    /// evaluates to a `CharTrie`. Requires that `CharTrie` is in scope.
-    ///
-    /// Fails if the set was unable to be compressed into the trie format.
-    #[cfg(feature = "new-trie")]
-    pub fn new_with(
+    fn level2(
+        leaves: &mut IndexSet<u64>,
         f: impl Fn(char) -> bool + Copy,
     ) -> Result<proc_macro2::TokenStream, core::num::TryFromIntError> {
-        use {
-            crate::CharRange,
-            alloc::vec::Vec,
-            bitvec::prelude::{self as bv, BitVec},
-            core::char,
-            core::convert::TryFrom,
-            indexmap::IndexSet,
-            itertools::Itertools,
-            quote::quote,
-        };
-
-        fn level1(f: impl Fn(char) -> bool + Copy) -> proc_macro2::TokenStream {
-            let level1: BitVec<bv::LittleEndian, u64> =
-                CharRange::from('\0'..'\u{800}').iter().map(f).collect();
-            let level1 = level1.as_slice();
-            quote!(&[#(#level1),*],)
+        let mut level2 = Vec::with_capacity(992);
+        // level2 has to manually include the surrogate range
+        let level2_chunks = (0x800u32..0x10000)
+            .map(|cp| char::try_from(cp).map(f).unwrap_or(false))
+            .chunks(64);
+        for chunk in &level2_chunks {
+            let chunk: BitVec<bv::LittleEndian, u64> = chunk.collect();
+            assert_eq!(chunk.len(), 64);
+            let chunk = chunk.as_slice()[0];
+            level2.push(u8::try_from(leaves.insert_full(chunk).0)?);
         }
-
-        fn level2(
-            leaves: &mut IndexSet<u64>,
-            f: impl Fn(char) -> bool + Copy,
-        ) -> Result<proc_macro2::TokenStream, core::num::TryFromIntError> {
-            let mut level2 = Vec::with_capacity(992);
-            // level2 has to manually include the surrogate range
-            let level2_chunks = (0x800u32..0x10000)
-                .map(|cp| char::try_from(cp).map(f).unwrap_or(false))
-                .chunks(64);
-            for chunk in &level2_chunks {
-                let chunk: BitVec<bv::LittleEndian, u64> = chunk.collect();
-                assert_eq!(chunk.len(), 64);
-                let chunk = chunk.as_slice()[0];
-                level2.push(u8::try_from(leaves.insert_full(chunk).0)?);
-            }
-            assert_eq!(level2.len(), 992);
-            Ok(quote!(&[#(#level2),*],))
-        }
-
-        fn level3(
-            leaves: &mut IndexSet<u64>,
-            f: impl Fn(char) -> bool,
-        ) -> Result<proc_macro2::TokenStream, core::num::TryFromIntError> {
-            let mut first = Vec::with_capacity(256);
-            let mut second: IndexSet<Vec<u8>> = IndexSet::new();
-            let large_chunks = CharRange::from('\u{10000}'..).iter().map(f).chunks(4096);
-            for large_chunk in &large_chunks {
-                let large_chunk: BitVec<bv::LittleEndian, u8> = large_chunk.collect();
-                assert_eq!(large_chunk.len(), 4096);
-                let small_chunks = large_chunk.into_iter().chunks(64);
-                let mut chunk_indices = Vec::with_capacity(64);
-                for small_chunk in &small_chunks {
-                    let small_chunk: BitVec<bv::LittleEndian, u64> = small_chunk.collect();
-                    assert_eq!(small_chunk.len(), 64);
-                    let small_chunk = small_chunk.as_slice()[0];
-                    chunk_indices.push(u8::try_from(leaves.insert_full(small_chunk).0)?);
-                }
-                assert_eq!(chunk_indices.len(), 64);
-                first.push(u8::try_from(second.insert_full(chunk_indices).0)?);
-            }
-            assert_eq!(first.len(), 256);
-            let second = second.into_iter();
-            Ok(quote!((&[#(#first),*], &[#([#(#second),*]),*]),))
-        }
-
-        let mut src = proc_macro2::TokenStream::new();
-
-        let mut leaves: IndexSet<u64> = IndexSet::new();
-
-        src.extend(level1(f));
-        src.extend(level2(&mut leaves, f)?);
-        src.extend(level3(&mut leaves, f)?);
-
-        let leaves = leaves.into_iter();
-        src.extend(quote!(&[#(#leaves),*],));
-
-        Ok(quote!( CharTrie::from_raw(#src) ))
+        assert_eq!(level2.len(), 992);
+        Ok(quote!(&[#(#level2),*],))
     }
+
+    fn level3(
+        leaves: &mut IndexSet<u64>,
+        f: impl Fn(char) -> bool,
+    ) -> Result<proc_macro2::TokenStream, core::num::TryFromIntError> {
+        let mut first = Vec::with_capacity(256);
+        let mut second: IndexSet<Vec<u8>> = IndexSet::new();
+        let large_chunks = CharRange::from('\u{10000}'..).iter().map(f).chunks(4096);
+        for large_chunk in &large_chunks {
+            let large_chunk: BitVec<bv::LittleEndian, u8> = large_chunk.collect();
+            assert_eq!(large_chunk.len(), 4096);
+            let small_chunks = large_chunk.into_iter().chunks(64);
+            let mut chunk_indices = Vec::with_capacity(64);
+            for small_chunk in &small_chunks {
+                let small_chunk: BitVec<bv::LittleEndian, u64> = small_chunk.collect();
+                assert_eq!(small_chunk.len(), 64);
+                let small_chunk = small_chunk.as_slice()[0];
+                chunk_indices.push(u8::try_from(leaves.insert_full(small_chunk).0)?);
+            }
+            assert_eq!(chunk_indices.len(), 64);
+            first.push(u8::try_from(second.insert_full(chunk_indices).0)?);
+        }
+        assert_eq!(first.len(), 256);
+        let second = second.into_iter();
+        Ok(quote!((&[#(#first),*], &[#([#(#second),*]),*]),))
+    }
+
+    let mut src = proc_macro2::TokenStream::new();
+
+    let mut leaves: IndexSet<u64> = IndexSet::new();
+
+    src.extend(level1(f));
+    src.extend(level2(&mut leaves, f)?);
+    src.extend(level3(&mut leaves, f)?);
+
+    let leaves = leaves.into_iter();
+    src.extend(quote!(&[#(#leaves),*],));
+
+    Ok(quote!( CharTrie::from_raw(#src) ))
 }
 
 #[cfg(test)]
@@ -252,7 +207,7 @@ mod tests {
         use quote::quote;
         use alloc::string::ToString;
 
-        let trie = CharTrie::new_with(|c| c.is_ascii()).unwrap();
+        let trie = generate(|c| c.is_ascii()).unwrap();
 
         // This is the generated trie's code
         let ascii = &[

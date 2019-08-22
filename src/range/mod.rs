@@ -2,7 +2,7 @@ use {
     crate::{AFTER_SURROGATE, BEFORE_SURROGATE},
     core::{
         char,
-        cmp::{max, min, Ordering},
+        cmp::Ordering,
         fmt,
         hash::{Hash, Hasher},
         ops::{Bound, RangeBounds, RangeInclusive},
@@ -10,7 +10,9 @@ use {
 };
 
 mod iter;
+
 pub use self::iter::Iter;
+
 #[cfg(feature = "par-iter")]
 mod par_iter;
 
@@ -109,7 +111,7 @@ impl<R: RangeBounds<char>> From<R> for CharRange {
                     AFTER_SURROGATE
                 } else {
                     #[allow(unsafe_code)]
-                    unsafe {
+                        unsafe {
                         char::from_u32_unchecked(c as u32 + 1)
                     }
                 }
@@ -125,7 +127,7 @@ impl<R: RangeBounds<char>> From<R> for CharRange {
                     BEFORE_SURROGATE
                 } else {
                     #[allow(unsafe_code)]
-                    unsafe {
+                        unsafe {
                         char::from_u32_unchecked(c as u32 - 1)
                     }
                 }
@@ -185,31 +187,5 @@ impl CharRange {
     /// An iterator over this range.
     pub fn iter(self) -> Iter {
         self.into_iter()
-    }
-
-    /// Split this iterator into a range over the characters before and after the surrogate range.
-    fn split_range(self) -> (RangeInclusive<u32>, RangeInclusive<u32>) {
-        // If self.low is greater than BEFORE_SURROGATE, the left range is empty
-        let left_low = if self.low <= BEFORE_SURROGATE {
-            self.low
-        } else {
-            char::MAX
-        };
-        // The left range stops at the surrogate range or the end, whichever is sooner
-        let left_high = min(self.high, BEFORE_SURROGATE);
-
-        // The right range starts at the surrogate range or the start, whichever is later
-        let right_low = max(self.low, AFTER_SURROGATE);
-        // If self.high is less than AFTER_SURROGATE, the right range is empty
-        let right_high = if self.high >= AFTER_SURROGATE {
-            self.high
-        } else {
-            '\0'
-        };
-
-        (
-            left_low as u32..=left_high as u32,
-            right_low as u32..=right_high as u32,
-        )
     }
 }
