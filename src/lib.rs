@@ -1,18 +1,21 @@
 #![no_std]
 #![deny(unsafe_code, rust_2018_idioms)]
-#![warn(missing_debug_implementations)]
+#![warn(missing_debug_implementations, missing_docs)]
 
 //! Enjoy the efficient char range! Also provided are ways of working with noncontinuous
-//! sets of characters.
+//! sets of unicode codepoints as well as mapping unicode codepoints to values.
 //!
-//! - `CharRange` is a simple range of characters, effectively `std::ops::RangeInclusive<char>`.
-//! - `CharSet` is a set of characters handled as a sorted vector of compact ranges.
-//! - `CharTrie` is a static set of characters optimized for wide codepoint coverage.
+//! - `CharRange` is a simple range of codepoints, effectively `std::ops::RangeInclusive<char>`.
+//! - `CharSet` is a set of codepoints handled as a sorted vector of compact ranges.
+//! - `CharTrie` is a static set of codepoints optimized for wide codepoint coverage.
 //!
 //! # Features
 //!
 //! - `set`: Adds the `CharSet` type.
 //! - `trie`: Adds the `CharTrie` type.
+//! - `map`: Adds the `CharMap` reference types.
+//! - `owned-set`: Adds the `CharSetBuf` type.
+//! - `new-trie`: Adds code generation support for `CharTrie`s.
 //! - `par-iter`: Adds implementations of `rayon::IntoParallelIterator`.
 //!
 //! # Examples
@@ -20,12 +23,12 @@
 //! ```
 //! use mileage::CharRange;
 //!
-//! for character in CharRange::from('a'..='z') {
-//!     // character is each character in lowercase ascii in sorted order
+//! for ch in CharRange::from('a'..='z') {
+//!     // ch is each codepoint in lowercase ascii in sorted order
 //! }
 //!
-//! for character in CharRange::from(..) {
-//!     // character is every valid char in sorted order
+//! for ch in CharRange::from(..) {
+//!     // ch is every valid char in sorted order
 //! }
 //! ```
 
@@ -34,9 +37,15 @@ extern crate alloc;
 #[cfg(any(feature = "std", test))]
 extern crate std;
 
+/// Support for the `CharMap` family of types.
+#[cfg(feature = "map")]
+pub mod map;
+/// Support for the `CharRange` family of types.
 pub mod range;
+/// Support for the `CharSet` family of types.
 #[cfg(feature = "set")]
 pub mod set;
+/// Support for the `CharTrie` family of types.
 #[cfg(feature = "trie")]
 pub mod trie;
 

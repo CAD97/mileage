@@ -1,5 +1,5 @@
 use {
-    crate::{CharRange, set::CharSet},
+    crate::{set::CharSet, CharRange},
     rayon::{
         iter::plumbing::{Consumer, UnindexedConsumer},
         prelude::*,
@@ -30,6 +30,8 @@ impl<'a> IntoParallelIterator for &'a CharSet {
     type Item = char;
 
     fn into_par_iter(self) -> Iter<'a> {
-        Iter { raw: self.ranges.par_iter().flatten() }
+        Iter {
+            raw: self.ranges.par_iter().flatten(),
+        }
     }
 }

@@ -1,14 +1,16 @@
 use {
-    crate::{CharRange, set::CharSet},
+    crate::{set::CharSet, CharRange},
     core::{iter, slice::Iter as SliceIter},
 };
 
 /// An iterator over ranges of `char`.
 ///
 /// Constructed via `CharSet::ranges`. See `CharSet` for more information.
+///
+/// Constructed via `CharMapRef::ranges`. See `CharMapRef` for more information.
 #[derive(Clone, Debug)]
 pub struct RangeIter<'a> {
-    raw: SliceIter<'a, CharRange>,
+    pub(crate) raw: SliceIter<'a, CharRange>,
 }
 
 impl<'a> IntoIterator for &'a CharSet {
@@ -28,7 +30,7 @@ impl CharSet {
         }
     }
 
-    /// Iterate the characters of this set.
+    /// Iterate the codepoints of this set.
     pub fn chars(&self) -> impl Iterator<Item = char> + '_ {
         self.ranges().flat_map(IntoIterator::into_iter)
     }

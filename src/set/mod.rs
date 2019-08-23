@@ -4,15 +4,16 @@ use {
 };
 
 mod iter;
-#[cfg(feature = "par-iter")]
-mod par_iter;
 #[cfg(feature = "owned-set")]
 mod owned;
+#[cfg(feature = "par-iter")]
+mod par_iter;
 
+pub use self::iter::RangeIter;
 #[cfg(feature = "owned-set")]
 pub use self::owned::CharSetBuf;
 
-/// A set slice of characters represented by the compact ranges of characters.
+/// A set slice of codepoints represented by the compact ranges of codepoints.
 #[derive(Debug, Eq, PartialEq, PartialOrd, Hash)]
 #[repr(transparent)]
 pub struct CharSet {
@@ -27,8 +28,9 @@ impl Ord for CharSet {
 }
 
 impl CharSet {
+    /// Create a `CharSet` from a raw slice of ranges. Intended for use by code generation.
     #[allow(unsafe_code)]
-    pub /*const*/ fn from_raw(slice: &[CharRange]) -> &CharSet {
+    pub fn from_raw(slice: &[CharRange]) -> &CharSet {
         unsafe { &*(slice as *const [CharRange] as *const CharSet) }
     }
 }
@@ -39,12 +41,12 @@ impl CharSet {
         Self::from_raw(&[])
     }
 
-    /// Does this set include this character?
+    /// Does this set include this codepoint?
     pub fn contains(&self, c: char) -> bool {
         self.search(c).is_ok()
     }
 
-    /// How many characters are in this set?
+    /// How many codepoints are in this set?
     pub fn len(&self) -> usize {
         self.ranges().map(CharRange::len).sum()
     }
@@ -54,11 +56,11 @@ impl CharSet {
         self.ranges.is_empty()
     }
 
-    /// Binary search for where a character should be in this set.
+    /// Binary search for where a codepoint should be in this set.
     ///
     /// If the value is found then `Ok` is returned, containing the index of
     /// the containing range. If no containing range is found then `Err` is
-    /// returned, containing the index where the character should be added.
+    /// returned, containing the index where the codepoint should be added.
     #[inline]
     fn search(&self, c: char) -> Result<usize, usize> {
         self.ranges.binary_search_by(|r| r.cmp_char(c))

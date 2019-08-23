@@ -37,7 +37,7 @@ impl ParallelIterator for Iter {
 }
 
 impl CharRange {
-    /// Split this iterator into a range over the characters before and after the surrogate range.
+    /// Split this iterator into a range over the codepoints before and after the surrogate range.
     fn split_range(self) -> (RangeInclusive<u32>, RangeInclusive<u32>) {
         // If self.low is greater than BEFORE_SURROGATE, the left range is empty
         let left_low = if self.low <= BEFORE_SURROGATE {

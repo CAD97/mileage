@@ -16,7 +16,7 @@ pub use self::iter::Iter;
 #[cfg(feature = "par-iter")]
 mod par_iter;
 
-/// An inclusive range of characters.
+/// An inclusive range of codepoints.
 ///
 /// The most idiomatic way to construct this range is by converting from a std range:
 ///
@@ -31,9 +31,9 @@ mod par_iter;
 /// All empty ranges are considered equal no matter the internal state.
 #[derive(Copy, Clone, Eq)]
 pub struct CharRange {
-    /// The lowest character in this range (inclusive).
+    /// The lowest codepoint in this range (inclusive).
     pub low: char,
-    /// The highest character in this range (inclusive).
+    /// The highest codepoint in this range (inclusive).
     pub high: char,
 }
 
@@ -111,7 +111,7 @@ impl<R: RangeBounds<char>> From<R> for CharRange {
                     AFTER_SURROGATE
                 } else {
                     #[allow(unsafe_code)]
-                        unsafe {
+                    unsafe {
                         char::from_u32_unchecked(c as u32 + 1)
                     }
                 }
@@ -127,7 +127,7 @@ impl<R: RangeBounds<char>> From<R> for CharRange {
                     BEFORE_SURROGATE
                 } else {
                     #[allow(unsafe_code)]
-                        unsafe {
+                    unsafe {
                         char::from_u32_unchecked(c as u32 - 1)
                     }
                 }
@@ -140,7 +140,7 @@ impl<R: RangeBounds<char>> From<R> for CharRange {
 }
 
 impl CharRange {
-    /// Does this range include this character?
+    /// Does this range include this codepoint?
     ///
     /// # Examples
     ///
@@ -155,11 +155,11 @@ impl CharRange {
         (self.low <= c) & (c <= self.high)
     }
 
-    /// Determine the ordering of a character compared to this range.
+    /// Determine the ordering of a codepoint compared to this range.
     ///
     /// # Panics
     ///
-    /// Panics with debug assertions only if the range is empty. In optimized
+    /// Panics _with debug assertions only_ if the range is empty. In optimized
     /// builds, arbitrarily returns an ordering that is not `Ordering::Equal`.
     ///
     /// For a partial order, you can simply check emptiness beforehand.
@@ -174,7 +174,7 @@ impl CharRange {
         }
     }
 
-    /// How many characters are in this range?
+    /// How many codepoints are in this range?
     pub fn len(self) -> usize {
         self.iter().len()
     }

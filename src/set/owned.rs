@@ -8,7 +8,7 @@ use {
     },
 };
 
-/// A mutable set of characters represented by the compact ranges of characters.
+/// A mutable set of codepoints represented by the compact ranges of codepoints.
 #[derive(Clone, Debug, Default, Eq, PartialEq, PartialOrd, Hash)]
 pub struct CharSetBuf {
     /// # Correctness
@@ -62,7 +62,7 @@ impl CharSetBuf {
         self.ranges.clear()
     }
 
-    /// Insert a single character to this set.
+    /// Insert a single codepoint to this set.
     ///
     /// # Examples
     ///
@@ -100,6 +100,10 @@ impl CharSetBuf {
         }
     }
 
+    /// Insert a range of codepoints into this set.
+    ///
+    /// Functionally equivalent to inserting each character separately, but done
+    /// with a constant amount of work roughly equivalent to inserting a single codepoint.
     pub fn insert_range(&mut self, r: CharRange) {
         if r.is_empty() {
             return;
@@ -143,7 +147,7 @@ impl CharSetBuf {
         }
     }
 
-    /// Remove a single character to this set.
+    /// Remove a single codepoint from this set.
     ///
     /// # Examples
     ///
@@ -173,6 +177,10 @@ impl CharSetBuf {
         }
     }
 
+    /// Remove a range of codepoints from this set.
+    ///
+    /// Functionally equivalent to removing each character separately, but done
+    /// with a constant amount of work roughly equivalent to removing a single codepoint.
     pub fn remove_range(&mut self, r: CharRange) {
         if r.is_empty() {
             return;

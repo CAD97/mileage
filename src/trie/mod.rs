@@ -31,7 +31,7 @@ use core::fmt;
 /// six bits again are used to index the shared table.
 ///
 /// This format fits the full table into a maximum of 20KB, and less than 2KB if
-/// a relatively compressible pattern of characters above 0x800 are included.
+/// a relatively compressible pattern of codepoints above 0x800 are included.
 #[derive(Copy, Clone)]
 pub struct CharTrie {
     level1: &'static [u64; 32],
