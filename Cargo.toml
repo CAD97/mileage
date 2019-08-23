@@ -4,6 +4,14 @@ version = "0.1.0"
 edition = "2018"
 
 authors = ["Christopher Durham (aka CAD97) <cad97@cad97.com>"]
+description = "Enjoy the efficient char range!"
+repository = "https://github.com/CAD97/mileage"
+readme = "./README.md"
+keywords = []
+categories = []
+license = "MIT"
+
+maintenance = { status = "passively-maintained" }
 
 [features]
 default = []
@@ -41,3 +49,6 @@ harness = false
 
 [dev-dependencies]
 criterion = "0.2.11"
+
+[package.metadata.docs.rs]
+all-features = true
