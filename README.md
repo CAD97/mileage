@@ -1,11 +1,15 @@
 # mileage
 
-Enjoy the efficient char range! Also provided are ways of working with noncontinuous
-sets of unicode codepoints as well as mapping unicode codepoints to values.
+This crate is deprecated, as there are better ways of accomplishing its contributions now.
+
 - `CharRange` is a simple range of codepoints, effectively `std::ops::RangeInclusive<char>`.
+  The std ranges have supported iterating `char` for a long time now.
 - `CharSet` is a set of codepoints handled as a sorted vector of compact ranges.
+  `icu_collections` provides a `CodePointInversionList`.
 - `CharTrie` is a static set of codepoints optimized for wide codepoint coverage.
-- `CharMap` is a mapping from compact ranges of codepoints to values.
+  The simpler inversion list is usually sufficient.
+- `CharMap` is a mapping from (ranges of) codepoints to values.
+  `icu_collections` provides a `CodePointTrie` with map functionality.
 
 ## Features
 
