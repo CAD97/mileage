@@ -119,20 +119,13 @@ pub fn generate(
     f: impl Fn(char) -> bool + Copy,
 ) -> Result<proc_macro2::TokenStream, core::num::TryFromIntError> {
     use {
-        crate::CharRange,
-        alloc::vec::Vec,
-        bitvec::prelude::{self as bv, BitVec},
-        core::char,
-        core::convert::TryFrom,
-        indexmap::IndexSet,
-        itertools::Itertools,
-        quote::quote,
+        crate::CharRange, alloc::vec::Vec, bitvec::prelude::*, core::char, core::convert::TryFrom,
+        indexmap::IndexSet, itertools::Itertools, quote::quote,
     };
 
     fn level1(f: impl Fn(char) -> bool + Copy) -> proc_macro2::TokenStream {
-        let level1: BitVec<bv::LittleEndian, u64> =
-            CharRange::from('\0'..'\u{800}').iter().map(f).collect();
-        let level1 = level1.as_slice();
+        let level1: BitVec<u64, Lsb0> = CharRange::from('\0'..'\u{800}').iter().map(f).collect();
+        let level1 = level1.as_raw_slice();
         quote!(&[#(#level1),*],)
     }
 
@@ -146,9 +139,9 @@ pub fn generate(
             .map(|cp| char::try_from(cp).map(f).unwrap_or(false))
             .chunks(64);
         for chunk in &level2_chunks {
-            let chunk: BitVec<bv::LittleEndian, u64> = chunk.collect();
+            let chunk: BitVec<u64, Lsb0> = chunk.collect();
             assert_eq!(chunk.len(), 64);
-            let chunk = chunk.as_slice()[0];
+            let chunk = chunk.load();
             level2.push(u8::try_from(leaves.insert_full(chunk).0)?);
         }
         assert_eq!(level2.len(), 992);
@@ -163,14 +156,14 @@ pub fn generate(
         let mut second: IndexSet<Vec<u8>> = IndexSet::new();
         let large_chunks = CharRange::from('\u{10000}'..).iter().map(f).chunks(4096);
         for large_chunk in &large_chunks {
-            let large_chunk: BitVec<bv::LittleEndian, u8> = large_chunk.collect();
+            let large_chunk: BitVec<u8, Lsb0> = large_chunk.collect();
             assert_eq!(large_chunk.len(), 4096);
             let small_chunks = large_chunk.into_iter().chunks(64);
             let mut chunk_indices = Vec::with_capacity(64);
             for small_chunk in &small_chunks {
-                let small_chunk: BitVec<bv::LittleEndian, u64> = small_chunk.collect();
+                let small_chunk: BitVec<u64, Lsb0> = small_chunk.collect();
                 assert_eq!(small_chunk.len(), 64);
-                let small_chunk = small_chunk.as_slice()[0];
+                let small_chunk = small_chunk.load();
                 chunk_indices.push(u8::try_from(leaves.insert_full(small_chunk).0)?);
             }
             assert_eq!(chunk_indices.len(), 64);

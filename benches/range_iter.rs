@@ -3,7 +3,7 @@
 use {
     core::{char, iter::*, ops::RangeInclusive},
     criterion::{
-        black_box, criterion_group, criterion_main, BatchSize, Bencher, Benchmark, Criterion,
+        black_box, criterion_group, criterion_main, BatchSize, Bencher, BenchmarkGroup, Criterion,
     },
     mileage::{range::Iter, CharRange},
 };
@@ -105,17 +105,15 @@ fn bench_ranges(c: &mut Criterion) {
         )
     }
 
-    c.bench(
-        "CharIter",
-        Benchmark::new("chain_segments (fn())", |b| bench(b, chain_segments()))
-            .with_function("chain_segments ([closure])", |b| {
-                bench(b, chain_segments_())
-            })
-            .with_function("try_from (fn())", |b| bench(b, try_from()))
-            .with_function("try_from ([closure])", |b| bench(b, try_from_()))
-            .with_function("custom", |b| bench(b, custom()))
-            .with_function("actual", |b| bench(b, actual())),
-    );
+    let mut group = c.benchmark_group("CharIter");
+    group.bench_function("chain_segments (fn())", |b| bench(b, chain_segments()));
+    group.bench_function("chain_segments ([closure])", |b| {
+        bench(b, chain_segments_())
+    });
+    group.bench_function("try_from (fn())", |b| bench(b, try_from()));
+    group.bench_function("try_from ([closure])", |b| bench(b, try_from_()));
+    group.bench_function("custom", |b| bench(b, custom()));
+    group.bench_function("actual", |b| bench(b, actual()));
 }
 
 criterion_group!(benches, bench_ranges);
